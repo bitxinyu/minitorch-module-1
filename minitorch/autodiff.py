@@ -23,7 +23,11 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
     # TODO: Implement for Task 1.1.
-    raise NotImplementedError("Need to implement for Task 1.1")
+    # raise NotImplementedError("Need to implement for Task 1.1")
+    a = f(*(vals[:arg]+ (vals[arg] + epsilon, ) + vals[arg+1:]))
+    b = f(*(vals[:arg]+ (vals[arg] - epsilon, ) + vals[arg+1:]))
+    return  (a-b) / ( 2 * epsilon)
+    
 
 
 variable_count = 1
@@ -62,7 +66,22 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
         Non-constant Variables in topological order starting from the right.
     """
     # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    # raise NotImplementedError("Need to implement for Task 1.4")
+    topo_order = []
+    seen = set()
+    def DFS(variable: Variable):
+        if variable.unique_id in seen:
+            return
+        if variable.is_constant():
+            return 
+        if not variable.is_leaf():
+            parents = variable.parents
+            for p in parents:
+                DFS(p)
+        seen.add(variable.unique_id)
+        topo_order.insert(0, variable)
+    DFS(variable)
+    return topo_order
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -77,7 +96,21 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
     # TODO: Implement for Task 1.4.
-    raise NotImplementedError("Need to implement for Task 1.4")
+    # raise NotImplementedError("Need to implement for Task 1.4")
+    topo_order_variables = topological_sort(variable)
+    var_id_2_deriv = {variable.unique_id: deriv}
+    for var in topo_order_variables:
+        if var.is_leaf():
+            var.accumulate_derivative(var_id_2_deriv[var.unique_id])
+        else:
+            back = var.chain_rule(var_id_2_deriv[var.unique_id])
+            # back [(varable, deriv)...]
+            for b_var, b_deriv in back:
+                if b_var.unique_id in var_id_2_deriv:
+                    var_id_2_deriv[b_var.unique_id] += b_deriv
+                else:
+                    var_id_2_deriv[b_var.unique_id] = b_deriv
+
 
 
 @dataclass
